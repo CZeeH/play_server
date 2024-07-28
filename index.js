@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const { findAll, insert, update, deleteOne } = require('./db');
 
 const app = express();
-const port = 3000; 
+const port = 3010; 
 
 const dateRegex = /^\d{6}-\d{15}$/;
 
