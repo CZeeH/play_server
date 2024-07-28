@@ -1,7 +1,7 @@
 const { MongoClient, MongoServerError } = require('mongodb');
 // 本地db地址
-// const uri = "mongodb+srv://956100390:a956100390@cluster0.ph2wb8c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const uri = "mongodb://player_server_db:a956100390@47.99.132.17:27017/player_server_db";
+const uri = "mongodb+srv://956100390:a956100390@cluster0.ph2wb8c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// const uri = "mongodb://player_server_db:a956100390@47.99.132.17:27017/player_server_db";
 // 服务器数据库db
 // mongo mongodb://player_server_db:a956100390@47.99.132.17:27017/player_server_db
 const collectionName = 'playSubmitCol';
@@ -45,7 +45,7 @@ async function findAll(query = {}, options = { skip: 0, limit: 10 }) {
         console.log('已关闭数据库连接');
     }
 }
-
+findAll()
 async function update(filter, updateDoc) {
     try {
         await client.connect();
