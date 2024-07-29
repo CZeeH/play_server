@@ -9,8 +9,6 @@ const dbName = 'playSettlement';
 
 const client = new MongoClient(uri);
 
-
-
 /**
  * 全部查询
  * query : 查询条件
@@ -45,7 +43,7 @@ async function findAll(query = {}, options = { skip: 0, limit: 10 }) {
         console.log('已关闭数据库连接');
     }
 }
-findAll()
+
 async function update(filter, updateDoc) {
     try {
         await client.connect();
