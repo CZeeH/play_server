@@ -21,7 +21,7 @@ async function findAll(query = {}, options = { skip: 0, limit: 10 }) {
 
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
-        const total = await collection.countDocuments();
+        const total = await collection.countDocuments(query);
         // 查询集合中的所有文档并转为数组
         console.log(query, options)
         const data = await collection.find(query, options).toArray();
@@ -61,6 +61,30 @@ async function update(filter, updateDoc) {
         return {
             success: false,
             msg: '更新信息错误，原因未知'
+        }
+    } finally {
+        await client.close();
+        console.log('已关闭数据库连接');
+    }
+}
+
+async function batchUpdate(filter, updateDoc) {
+    try {
+        await client.connect();
+        console.log('update 成功连接到 MongoDB');
+        const db = client.db(dbName);
+        const collection = db.collection(collectionName);
+
+        await collection.updateMany({$or:filter}, { $set: updateDoc });
+        return {
+            success: true,
+            msg: '批量更新成功'
+        }
+    } catch (error) {
+        console.error('Error updating document:', error);
+        return {
+            success: false,
+            msg: '批量更新信息错误，原因未知'
         }
     } finally {
         await client.close();
@@ -127,4 +151,4 @@ async function insert(item) {
     }
 }
 
-module.exports = { findAll, insert, update, deleteOne };
+module.exports = { findAll, insert, update, deleteOne,batchUpdate };

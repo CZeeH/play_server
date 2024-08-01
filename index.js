@@ -4,7 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const uploadFile = require('./oss/index');
 const bodyParser = require('body-parser');
-const { findAll, insert, update, deleteOne } = require('./db');
+const { findAll, insert, update, deleteOne,batchUpdate } = require('./db');
 
 const app = express();
 const port = 3000; 
@@ -13,7 +13,8 @@ const dateRegex = /^\d{6}-\d{15}$/;
 
 /**CORS配置 */
 const corsOptions = {
-    origin: 'http://47.99.132.17:3889',
+    // origin: 'http://47.99.132.17:3889',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
@@ -116,6 +117,21 @@ app.post('/update_payment', async (req, res) => {
     try {
         const { filter, updateDoc } = req.body || {}
         const result = await update(filter, updateDoc)
+        res.status(200).send(result);
+
+    } catch (err) {
+        console.error('数据更新失败:', err);
+        res.status(500).send({
+            msg: '更新失败',
+            code: 500
+        });
+    }
+});
+/**批量更新 */
+app.post('/batch_update', async (req, res) => {
+    try {
+        const { filter, updateDoc } = req.body || {}
+        const result = await batchUpdate(filter, updateDoc)
         res.status(200).send(result);
 
     } catch (err) {
