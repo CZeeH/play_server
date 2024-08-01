@@ -13,8 +13,8 @@ const dateRegex = /^\d{6}-\d{15}$/;
 
 /**CORS配置 */
 const corsOptions = {
-    // origin: 'http://47.99.132.17:3889',
-    origin: 'http://localhost:5173',
+    origin: 'http://47.99.132.17:3889',
+    // origin: 'http://localhost:5173',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
