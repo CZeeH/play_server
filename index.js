@@ -12,9 +12,10 @@ const port = 3000;
 const dateRegex = /^\d{6}-\d{15}$/;
 const origin_inner = 'http://localhost:5173'
 const origin_online = 'http://47.99.132.17:3889'
+let origin = origin_online
 /**CORS配置 */
 const corsOptions = {
-    origin: origin_online,
+    origin:origin,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
