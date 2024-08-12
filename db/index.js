@@ -4,27 +4,33 @@ const uri = "mongodb+srv://956100390:a956100390@cluster0.ph2wb8c.mongodb.net/?re
 // const uri = "mongodb://player_server_db:a956100390@47.99.132.17:27017/player_server_db";
 // 服务器数据库db
 // mongo mongodb://player_server_db:a956100390@47.99.132.17:27017/player_server_db
-const collectionName = 'playSubmitCol';
+const settlementCollection = 'playSubmitCol'; // 订单处理列表
+const orderCollection = 'orderListCol'; // 订单生成列表
 const dbName = 'playSettlement';
+// playSettlement.playSubmitCol
 
 const client = new MongoClient(uri);
 
+
 /**
- * 全部查询
+ * 
+ * 结算列表查询
+ * whichCol: 选择collection
  * query : 查询条件
  * options：限制 默认返回前10
  *  */
-async function findAll(query = {}, options = { skip: 0, limit: 10 }) {
+async function findAll(whichCol,query = {}, options = { skip: 0, limit: 10 }) {
     try {
+        console.log(whichCol)
         await client.connect();
         console.log('成功连接到 MongoDB');
 
         const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const collection = db.collection(whichCol || settlementCollection);
         const total = await collection.countDocuments(query);
         // 查询集合中的所有文档并转为数组
         console.log(query, options)
-        const data = await collection.find(query, options).toArray();
+        const data = await collection.find(query, options).sort({ add_time: -1 }).toArray();
         console.log('获取到data', data.length)
         return {
             data,
@@ -44,12 +50,19 @@ async function findAll(query = {}, options = { skip: 0, limit: 10 }) {
     }
 }
 
-async function update(filter, updateDoc) {
+/**
+ * 结算列表更新
+ * @param {过滤} filter 
+ * @param {更新内容} updateDoc 
+ * @returns 
+ */
+async function update(whichCol,filter, updateDoc) {
     try {
+        console.log(whichCol,filter,updateDoc)
         await client.connect();
         console.log('update 成功连接到 MongoDB');
         const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const collection = db.collection(whichCol || settlementCollection);
 
         await collection.updateOne(filter, { $set: updateDoc });
         return {
@@ -67,13 +80,18 @@ async function update(filter, updateDoc) {
         console.log('已关闭数据库连接');
     }
 }
-
-async function batchUpdate(filter, updateDoc) {
+/**
+ * 结算列表批量更新
+ * @param {过滤} filter 
+ * @param {更新内容} updateDoc 
+ * @returns 
+ */
+async function batchUpdate(whichCol,filter, updateDoc) {
     try {
         await client.connect();
         console.log('update 成功连接到 MongoDB');
         const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const collection = db.collection(whichCol || settlementCollection);
 
         await collection.updateMany({$or:filter}, { $set: updateDoc });
         return {
@@ -91,13 +109,17 @@ async function batchUpdate(filter, updateDoc) {
         console.log('已关闭数据库连接');
     }
 }
-
-async function deleteOne(filter) {
+/**
+ * 结算列表删除
+ * @param {过滤} filter 
+ * @returns 
+ */
+async function deleteOne(whichCol,filter) {
     try {
         await client.connect();
-        console.log('update 成功连接到 MongoDB');
+        console.log('deleteOne 成功连接到 MongoDB whichCol:',whichCol,'filter',filter);
         const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const collection = db.collection(whichCol || settlementCollection);
 
         await collection.deleteOne(filter);
         return {
@@ -115,14 +137,18 @@ async function deleteOne(filter) {
         console.log('已关闭数据库连接');
     }
 }
-
-async function insert(item) {
+/**
+ * 结算列表插入
+ * @param {项目} item 
+ * @returns 
+ */
+async function insert(whichCol,item) {
     try {
         await client.connect();
         console.log('成功连接到 MongoDB');
 
         const db = client.db(dbName);
-        const collection = db.collection(collectionName);
+        const collection = db.collection(whichCol || settlementCollection);
 
         await collection.insertOne(item)
         return {

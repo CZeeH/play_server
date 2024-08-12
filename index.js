@@ -4,17 +4,17 @@ const path = require('path');
 const cors = require('cors');
 const uploadFile = require('./oss/index');
 const bodyParser = require('body-parser');
-const { findAll, insert, update, deleteOne,batchUpdate } = require('./db');
+const { findAll, insert, update, deleteOne, batchUpdate } = require('./db');
 
 const app = express();
-const port = 3000; 
+const port = 3000;
 
 const dateRegex = /^\d{6}-\d{15}$/;
-
+const origin_inner = 'http://localhost:5173'
+const origin_online = 'http://47.99.132.17:3889'
 /**CORS配置 */
 const corsOptions = {
-    origin: 'http://47.99.132.17:3889',
-    // origin: 'http://localhost:5173',
+    origin: origin_online,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
@@ -83,7 +83,7 @@ app.post('/submit', async (req, res) => {
                 success: true
             });
         }
-        const result = await insert(req.body)
+        const result = await insert('playSubmitCol', req.body)
         console.log(result)
         res.status(200).send(result)
         // res.status(500).send(result);
@@ -97,12 +97,11 @@ app.post('/submit', async (req, res) => {
     }
 });
 
-/**列表 */
+/**结算列表 */
 app.get('/ordertable_search', async (req, res) => {
     try {
         const { skip = 0, limit = 10, ...query } = req.query
-        const result = await findAll(query, { skip:Number(skip), limit:Number(limit) })
-        console.log('获取结算列表成功了')
+        const result = await findAll('playSubmitCol', query, { skip: Number(skip), limit: Number(limit) })
         res.status(200).send(result);
     } catch (err) {
         console.error('获取结算列表失败:', err);
@@ -116,7 +115,7 @@ app.get('/ordertable_search', async (req, res) => {
 app.post('/update_payment', async (req, res) => {
     try {
         const { filter, updateDoc } = req.body || {}
-        const result = await update(filter, updateDoc)
+        const result = await update('playSubmitCol', filter, updateDoc)
         res.status(200).send(result);
 
     } catch (err) {
@@ -131,7 +130,7 @@ app.post('/update_payment', async (req, res) => {
 app.post('/batch_update', async (req, res) => {
     try {
         const { filter, updateDoc } = req.body || {}
-        const result = await batchUpdate(filter, updateDoc)
+        const result = await batchUpdate('playSubmitCol', filter, updateDoc)
         res.status(200).send(result);
 
     } catch (err) {
@@ -143,11 +142,11 @@ app.post('/batch_update', async (req, res) => {
     }
 });
 
-/**列表 */
+/**列表删除 */
 app.get('/delete_record', async (req, res) => {
     try {
         console.log(req.query.order_id)
-        const result = await deleteOne({ order_id: req.query.order_id })
+        const result = await deleteOne('playSubmitCol', { order_id: req.query.order_id })
         res.status(200).send(result);
     } catch (err) {
         console.error('删除记录失败:', err);
@@ -157,6 +156,72 @@ app.get('/delete_record', async (req, res) => {
         });
     }
 });
+/** 新建订单 */
+app.post('/create_order', async (req, res) => {
+    try {
+        const random_string = generateRandomString(24)
+        const random_url = `${origin}/#/pick?key=${random_string}`
+        const data = { ...req.body, random_url, random_string }
+        const result = await insert('orderListCol', data)
+        console.log(result)
+        res.status(200).send({ ...result, random_url, random_string })
+        // res.status(500).send(result);
+    } catch (err) {
+        console.error('上传结算信息失败:', err);
+        res.status(500).send({
+            msg: '上传结算信息失败',
+            success: false
+        });
+    }
+});
+
+/** 更新订单数据 */
+app.post('/update_order', async (req, res) => {
+    try {
+        const { filter, updateDoc } = req.body || {}
+        const result = await update('orderListCol', filter, updateDoc)
+        console.log(result)
+        res.status(200).send(result)
+    } catch (err) {
+        console.error('更新订单信息失败:', err);
+        res.status(500).send({
+            msg: '更新订单信息失败',
+            success: false
+        });
+    }
+});
+/** 获取订单列表 */
+app.get('/get_create_orderlist', async (req, res) => {
+    try {
+        const { skip = 0, limit = 10, ...query } = req.query
+        const result = await findAll('orderListCol', query, { skip: Number(skip), limit: Number(limit) })
+        res.status(200).send(result);
+    } catch (err) {
+        console.error('获取订单列表失败:', err);
+        res.status(500).send({
+            msg: '获取订单列表失败',
+            success: false
+        });
+    }
+});
+
+/**生成订单列表删除 */
+app.get('/delete_order', async (req, res) => {
+    try {
+        console.log('数据删除中，删除id：', req.query.order_id)
+        const result = await deleteOne('orderListCol', { order_id: req.query.order_id })
+        res.status(200).send(result);
+    } catch (err) {
+        console.error('删除记录失败:', err);
+        res.status(500).send({
+            msg: '删除记录失败',
+            success: false
+        });
+    }
+});
+
+
+
 
 // 启动 Express 服务器
 app.listen(port, () => {
