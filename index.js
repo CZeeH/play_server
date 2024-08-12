@@ -225,5 +225,5 @@ app.get('/delete_order', async (req, res) => {
 
 // 启动 Express 服务器
 app.listen(port, () => {
-    console.log(`服务运行在 http://localhost:${port}`);
+    console.log(`服务运行在 http://localhost:${port} 当前的前端配置是:${corsOptions.origin}`);
 });
