@@ -10,12 +10,19 @@ const app = express();
 const port = 3000;
 
 const dateRegex = /^\d{6}-\d{15}$/;
-const origin_inner = 'http://localhost:5173'
-const origin_online = 'http://47.99.132.17:3889'
-let origin = origin_online
+// const origin_inner = 'http://localhost:5173'
+// const origin_online = 'http://47.99.132.17:3889'
+const originArr = ['http://192.168.1.11:5173','http://192.168.1.1:5173','http://47.99.132.17:3889','http://localhost:5173']
+// let origin = origin_inner
 /**CORS配置 */
 const corsOptions = {
-    origin:origin,
+    origin: (origin, callback) => {
+        if (originArr.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
@@ -224,7 +231,7 @@ app.get('/delete_order', async (req, res) => {
 
 
 
-// 启动 Express 服务器
+// 启动 Express 服务器 当前的前端配置是:${corsOptions.origin}
 app.listen(port, () => {
-    console.log(`服务运行在 http://localhost:${port} 当前的前端配置是:${corsOptions.origin}`);
+    console.log(`服务运行在 http://localhost:${port} `);
 });
