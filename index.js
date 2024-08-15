@@ -10,10 +10,10 @@ const app = express();
 const port = 3000;
 
 const dateRegex = /^\d{6}-\d{15}$/;
-// const origin_inner = 'http://localhost:5173'
-// const origin_online = 'http://47.99.132.17:3889'
+const origin_inner = 'http://localhost:5173'
+const origin_online = 'http://47.99.132.17:3889'
+let origin = origin_online
 const originArr = ['http://192.168.1.11:5173','http://192.168.1.1:5173','http://47.99.132.17:3889','http://localhost:5173']
-// let origin = origin_inner
 /**CORS配置 */
 const corsOptions = {
     origin: (origin, callback) => {
@@ -168,6 +168,8 @@ app.get('/delete_record', async (req, res) => {
 app.post('/create_order', async (req, res) => {
     try {
         const random_string = generateRandomString(24)
+        const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        console.log('ip ====== ',userIp)
         const random_url = `${origin}/#/pick?key=${random_string}`
         const data = { ...req.body, random_url, random_string }
         const result = await insert('orderListCol', data)
