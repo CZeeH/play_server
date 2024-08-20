@@ -13,7 +13,12 @@ const dateRegex = /^\d{6}-\d{15}$/;
 const origin_inner = 'http://localhost:5173'
 const origin_online = 'http://47.99.132.17:3889'
 let origin = origin_online
-const originArr = ['http://192.168.1.11:5173','http://192.168.1.1:5173','http://47.99.132.17:3889','http://localhost:5173']
+const originArr = ['http://192.168.1.11:5173', 'http://192.168.1.1:5173', 'http://47.99.132.17:3889', 'http://localhost:5173']
+const orderStatus = {
+    unSubmitted: '1',
+    unAssigned: '2',
+    Assigned: '3'
+}
 /**CORS配置 */
 const corsOptions = {
     origin: (origin, callback) => {
@@ -169,11 +174,9 @@ app.post('/create_order', async (req, res) => {
     try {
         const random_string = generateRandomString(24)
         const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('ip ====== ',userIp)
         const random_url = `${origin}/#/pick?key=${random_string}`
         const data = { ...req.body, random_url, random_string }
         const result = await insert('orderListCol', data)
-        console.log(result)
         res.status(200).send({ ...result, random_url, random_string })
         // res.status(500).send(result);
     } catch (err) {
@@ -230,6 +233,104 @@ app.get('/delete_order', async (req, res) => {
     }
 });
 
+/**生成接单凭证 */
+app.get('/create_get_order_token', async (req, res) => {
+    try {
+
+        const { work_qq, work_wx } = req.query
+        const get_order_token = `${generateRandomString(10)}-${generateRandomString(6)}`
+        const result = await insert('orderTokenCol', { work_qq, work_wx, get_order_token })
+        res.status(200).send({ ...result, get_order_token, msg: '生成凭证成功' });
+    } catch (err) {
+        console.error('生成凭证失败:', err);
+        res.status(500).send({
+            msg: '生成凭证失败',
+            success: false
+        });
+    }
+});
+
+/** 获取接单凭证列表 */
+app.get('/get_order_token_list', async (req, res) => {
+    try {
+        const { skip = 0, limit = 10, ...query } = req.query
+        const result = await findAll('orderTokenCol', query, { skip: Number(skip), limit: Number(limit) })
+        res.status(200).send(result);
+    } catch (err) {
+        console.error('获取凭证列表失败:', err);
+        res.status(500).send({
+            msg: '获取凭证列表失败',
+            success: false
+        });
+    }
+});
+
+/**删除接单凭证 */
+app.get('/delete_order_token', async (req, res) => {
+    try {
+        console.log('数据删除中，删除凭证：', req.query)
+        const result = await deleteOne('orderTokenCol', { get_order_token: req.query.get_order_token })
+        res.status(200).send(result);
+    } catch (err) {
+        console.error('删除凭证失败:', err);
+        res.status(500).send({
+            msg: '删除凭证失败',
+            success: false
+        });
+    }
+});
+
+/** 获取接单凭证列表 */
+app.get('/check_order_token', async (req, res) => {
+    try {
+
+        const { get_order_token } = req.query
+        const result = await findAll('orderTokenCol', { get_order_token }, { skip: 0, limit: 10 })
+        if (result.total !== 1) {
+            res.status(200).send({ ...result, msg: '凭证有问题 请联系管理员', success: false })
+            return
+        }
+        res.status(200).send({ ...result, msg: '凭证合格 开始接单', success: true })
+    } catch (err) {
+        console.error('获取凭证列表失败:', err);
+        res.status(500).send({
+            msg: '获取凭证列表失败',
+            success: false
+        });
+    }
+});
+
+/** 检查陪玩凭证 并检查是否能接单*/
+app.post('/check_order_token_and_get_order', async (req, res) => {
+    try {
+        const { filter, updateDoc } = req.body || {}
+        // // 检查是否凭证ok
+        // const { get_order_token } = updateDoc 
+        // const result1 = await findAll('orderTokenCol', { get_order_token }, { skip: 0, limit: 10 })
+        // if (result1.total !== 1) {
+        //     res.status(200).send({ ...result1, msg: '凭证有问题 请联系管理员', success: false })
+        //     return
+        // }
+        // const { order_id } = filter
+        // const query = { order_id, order_status: orderStatus.unAssigned, }
+        // console.log('query --- ',query)
+        // const result2 = await findAll('orderListCol', query, { skip:0, limit: 10, })
+        // if (result2.total === 0) {
+        //     res.status(200).send({ ...result2, msg: '订单已经被抢走了 下次手快点吧', success: false })
+        //     return
+        // }
+        const result = await update('orderListCol', filter, updateDoc)
+        result.success ? res.status(200).send({ ...result, msg: "抢单成功 先去联系老板哦" }) :
+            res.status(200).send({ ...result, msg: "抢单失败" })
+
+    } catch (err) {
+        console.error('抢单失败 请联系管理员', err);
+        res.status(500).send({
+            msg: '抢单失败 请联系管理员',
+            success: false
+        });
+    }
+});
 
 
 
